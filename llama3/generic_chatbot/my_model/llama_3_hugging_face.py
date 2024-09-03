@@ -4,7 +4,7 @@ import requests
 """**HF account Configuration**"""
 
 config_data = json.load(open("config.json"))
-HF_TOKEN = config_data["HF_TOKEN"]
+HF_TOKEN = "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"
 
 model_name = "meta-llama/Meta-Llama-3-8B"
 
