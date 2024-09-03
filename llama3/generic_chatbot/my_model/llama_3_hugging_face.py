@@ -12,61 +12,35 @@ Original file is located at
 !pip install -r requirements.txt
 
 import json
-import torch
-from transformers import (AutoTokenizer,
-                          AutoModelForCausalLM,
-                          BitsAndBytesConfig,
-                          pipeline)
+import requests
 
 """**HF account Configuration**"""
 
+# Load the model configuration
 config_data = json.load(open("config.json"))
-HF_TOKEN = config_data["HF_TOKEN"]
+model_name_or_path = config_data["_name_or_path"]
 
-model_name = "meta-llama/Meta-Llama-3-8B"
+# API token
+HF_TOKEN = "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"
 
-"""**Quantisation Configuration**"""
+API_URL = f"https://api-inference.huggingface.co/models/{model_name_or_path}"
+headers = {
+    "Authorization": f"Bearer {HF_TOKEN}"
+}
 
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16
-)
-
-"""**Loading the Tokenizer and the LLM**"""
-
-tokenizer = AutoTokenizer.from_pretrained(model_name,
-                                          token=HF_TOKEN)
-
-tokenizer.pad_token = tokenizer.eos_token
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    device_map="auto",
-    quantization_config=bnb_config,
-    token=HF_TOKEN
-)
-
-text_generator = pipeline(
-    "text-generation",
-    model=model,
-    tokenizer=tokenizer,
-    max_new_tokens=128
-)
+def query_huggingface_api(prompt):
+    response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+    return response.json()
 
 def get_response(prompt):
-  sequences = text_generator(prompt)
-  gen_text = sequences[0]["generated_text"]
-  return gen_text
+    response = query_huggingface_api(prompt)
+    gen_text = response[0]["generated_text"]
+    return gen_text
 
 prompt = "What is Machine Learning?"
 
 llama3_response = get_response(prompt)
 
-llama3_response
-
 print(llama3_response)
 
 print(llama3_response[len(prompt):])
-
